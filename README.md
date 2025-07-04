@@ -130,4 +130,8 @@ This project is licensed under the MIT License.
 
 ## Contact
 
+<<<<<<< HEAD
 - [Your Name](https://github.com/yourusername)
+=======
+- [Your Name](https://github.com/yourusername)
+>>>>>>> db5098e (Add homepage images for deployment and update .gitignore)
