@@ -37,10 +37,16 @@ const DetectPage = () => {
       formData.append("realMedia", realFile);
       formData.append("fakeMedia", fakeFile);
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+      
       const response = await fetch("https://deepfake-detection-sxos.onrender.com/detect", {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) throw new Error("Server error");
 
@@ -48,7 +54,11 @@ const DetectPage = () => {
       setResult(data);
       setShowPopup(true);
     } catch (err) {
-      setError(err.message || "Unknown error");
+      if (err.name === 'AbortError') {
+        setError("Request timed out. Please try again with smaller images or check your connection.");
+      } else {
+        setError(err.message || "Unknown error");
+      }
     } finally {
       setIsProcessing(false);
     }

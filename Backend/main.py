@@ -7,7 +7,12 @@ from werkzeug.utils import secure_filename
 import cv2
 
 app = Flask(__name__)
-CORS(app)
+# Configure CORS to allow your Vercel frontend
+CORS(app, origins=[
+    "https://deepfake-detection-lh9w.vercel.app",
+    "http://localhost:5173",  # For local development
+    "http://localhost:3000"   # Alternative local port
+])
 
 # Directory to save uploaded files
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
@@ -67,10 +72,20 @@ def detect():
         if real_img is None or fake_img is None:
             raise ValueError("Unable to read one or both images")
 
-        # Get face embeddings
+        # Get face embeddings with optimized settings
         try:
-            representation_real = DeepFace.represent(img_path=real_media_path, model_name="Facenet512", enforce_detection=True)
-            representation_fake = DeepFace.represent(img_path=fake_media_path, model_name="Facenet512", enforce_detection=True)
+            representation_real = DeepFace.represent(
+                img_path=real_media_path, 
+                model_name="Facenet512", 
+                enforce_detection=False,  # Changed to False for faster processing
+                detector_backend="opencv"  # Use OpenCV for faster detection
+            )
+            representation_fake = DeepFace.represent(
+                img_path=fake_media_path, 
+                model_name="Facenet512", 
+                enforce_detection=False,  # Changed to False for faster processing
+                detector_backend="opencv"  # Use OpenCV for faster detection
+            )
 
             vector_real = representation_real[0]["embedding"]
             vector_fake = representation_fake[0]["embedding"]
