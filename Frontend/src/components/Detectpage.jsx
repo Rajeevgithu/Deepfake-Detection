@@ -65,12 +65,12 @@ const DetectPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] font-sans mx-auto max-w-[1440px] rounded-none md:rounded-[3%] overflow-hidden">
+    <div className="min-h-screen bg-white font-sans mx-auto max-w-[1440px] overflow-hidden">
       <StickyHeader />
 
       <section className="p-6 md:p-12 max-w-5xl mx-auto">
         <h1
-          className="text-3xl md:text-5xl font-bold text-center text-[#1A237E] mb-12"
+          className="text-3xl md:text-5xl font-bold text-center text-[#7C6CF6] mb-12"
           data-aos="fade-down"
         >
           Deepfake Detection Interface
@@ -79,15 +79,15 @@ const DetectPage = () => {
         <div className="flex flex-col md:flex-row justify-center gap-10 mb-8">
           {/* Real File Upload */}
           <div
-            className="flex-1 bg-white p-6 rounded-3xl shadow-lg border border-[#E0E3E7] text-center"
+            className="flex-1 bg-[#7C6CF6]/10 p-6 shadow-lg border border-[#7C6CF6]/20 text-center"
             data-aos="fade-up"
           >
-            <h2 className="text-xl font-semibold text-[#1A237E] mb-4">
+            <h2 className="text-xl font-semibold text-[#7C6CF6] mb-4">
               Real Image / Video
             </h2>
             <label
               htmlFor="real-media"
-              className="cursor-pointer block bg-[#F5F7FA] hover:bg-[#E3F2FD] transition border-2 border-dashed border-[#00ACC1] rounded-xl h-56 flex justify-center items-center overflow-hidden"
+              className="cursor-pointer block bg-white hover:bg-[#7C6CF6]/10 transition border-2 border-dashed border-[#7C6CF6] hover:border-[#24E37A] hover:ring-4 hover:ring-[#24E37A] hover:ring-opacity-30 h-56 flex justify-center items-center overflow-hidden"
             >
               <input
                 type="file"
@@ -103,26 +103,26 @@ const DetectPage = () => {
                     className="w-full h-full object-cover rounded-lg"
                   />
                 ) : (
-                  <span className="text-[#212121]">{realFile.name}</span>
+                  <span className="text-[#7C6CF6]">{realFile.name}</span>
                 )
               ) : (
-                <span className="text-[#757575]">Click to upload</span>
+                <span className="text-[#7C6CF6]">Click to upload</span>
               )}
             </label>
           </div>
 
           {/* Fake File Upload */}
           <div
-            className="flex-1 bg-white p-6 rounded-3xl shadow-lg border border-[#E0E3E7] text-center"
+            className="flex-1 bg-[#24E37A]/10 p-6 shadow-lg border border-[#24E37A]/20 text-center"
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            <h2 className="text-xl font-semibold text-[#1A237E] mb-4">
+            <h2 className="text-xl font-semibold text-[#24E37A] mb-4">
               Suspected Deepfake
             </h2>
             <label
               htmlFor="fake-media"
-              className="cursor-pointer block bg-[#F5F7FA] hover:bg-[#E3F2FD] transition border-2 border-dashed border-[#00ACC1] rounded-xl h-56 flex justify-center items-center overflow-hidden"
+              className="cursor-pointer block bg-white hover:bg-[#24E37A]/10 transition border-2 border-dashed border-[#24E37A] hover:border-[#7C6CF6] hover:ring-4 hover:ring-[#7C6CF6] hover:ring-opacity-30 h-56 flex justify-center items-center overflow-hidden"
             >
               <input
                 type="file"
@@ -138,10 +138,10 @@ const DetectPage = () => {
                     className="w-full h-full object-cover rounded-lg"
                   />
                 ) : (
-                  <span className="text-[#212121]">{fakeFile.name}</span>
+                  <span className="text-[#24E37A]">{fakeFile.name}</span>
                 )
               ) : (
-                <span className="text-[#757575]">Click to upload</span>
+                <span className="text-[#24E37A]">Click to upload</span>
               )}
             </label>
           </div>
@@ -160,10 +160,10 @@ const DetectPage = () => {
         )}
 
         <button
-          className={`mx-auto block px-10 py-3 rounded-xl text-lg font-semibold shadow-lg transition-all duration-300 ${
+          className={`mx-auto block px-10 py-4 text-lg font-semibold shadow-lg transition-all duration-300 rounded-full ${
             isProcessing
-              ? "bg-[#757575] text-white cursor-not-allowed"
-              : "bg-[#00ACC1] text-white hover:bg-[#F9A825] hover:text-[#212121]"
+              ? "bg-gray-500 text-white cursor-not-allowed opacity-75"
+              : "bg-gradient-to-r from-[#24E37A] to-[#7C6CF6] text-white hover:from-[#7C6CF6] hover:to-[#24E37A] hover:ring-4 hover:ring-[#24E37A] hover:ring-opacity-30 hover:scale-105"
           }`}
           onClick={handleCheckScore}
           disabled={isProcessing}
@@ -190,19 +190,19 @@ const DetectPage = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white/80 text-center py-4 mt-12 text-[#757575] border-t border-[#E0E3E7] shadow-inner text-sm">
+      <footer className="bg-[#7C6CF6]/10 text-center py-4 mt-12 text-[#7C6CF6] border-t border-[#7C6CF6]/20 shadow-inner text-sm">
         ©2024 All Rights Reserved. This site is protected by the Google Privacy Policy and Terms of Service apply.
       </footer>
 
       {/* Result Popup */}
       {showPopup && result && (
-        <div className="fixed top-1/2 left-1/2 z-50 transform -translate-x-1/2 -translate-y-1/2 bg-white border-2 border-[#00ACC1] rounded-2xl p-8 shadow-2xl max-w-[90vw] w-[360px] text-center">
-          <h3 className="text-xl font-bold mb-4 text-[#1A237E]">Detection Result</h3>
+        <div className="fixed top-1/2 left-1/2 z-50 transform -translate-x-1/2 -translate-y-1/2 bg-white border-2 border-[#7C6CF6] p-8 shadow-2xl max-w-[90vw] w-[360px] text-center">
+          <h3 className="text-xl font-bold mb-4 text-[#7C6CF6]">Detection Result</h3>
           <p className="mb-2 font-medium">
-            <span className="text-[#212121]">Result: </span>
+            <span className="text-[#7C6CF6]">Result: </span>
             <span
               className={`font-bold ${
-                result.is_likely_deepfake ? "text-red-600" : "text-green-600"
+                result.is_likely_deepfake ? "text-red-600" : "text-[#24E37A]"
               }`}
             >
               {result.is_likely_deepfake ? "Likely Deepfake" : "Likely Real"}
@@ -216,7 +216,7 @@ const DetectPage = () => {
             <strong>Message:</strong> {result.message}
           </p>
           <button
-            className="mt-2 bg-[#00ACC1] text-white px-6 py-2 rounded-lg hover:bg-[#F9A825] hover:text-[#212121] transition"
+            className="mt-2 bg-gradient-to-r from-[#24E37A] to-[#7C6CF6] text-white px-6 py-2 hover:from-[#7C6CF6] hover:to-[#24E37A] hover:ring-4 hover:ring-[#24E37A] hover:ring-opacity-30 transition rounded-full"
             onClick={() => {
               setShowPopup(false);
               setRealFile(null);
@@ -233,7 +233,7 @@ const DetectPage = () => {
 
       {/* Suggestion Prompt */}
       {showSuggestion && (
-        <div className="mt-6 mx-auto text-center bg-[#e3f7fa] text-[#007c91] py-4 px-6 rounded-xl max-w-md font-medium shadow">
+        <div className="mt-6 mx-auto text-center bg-[#7C6CF6]/10 text-[#7C6CF6] py-4 px-6 max-w-md font-medium shadow">
           Try uploading another sample to verify further.
         </div>
       )}

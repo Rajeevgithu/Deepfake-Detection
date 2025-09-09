@@ -9,14 +9,15 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F5F7FA] via-[#E8F5E9] to-[#E0F7FA] font-sans max-w-[1440px] mx-auto rounded-none md:rounded-[3%]">
+    <div className="min-h-screen bg-white font-sans max-w-[1440px] mx-auto">
       <StickyHeader />
-      <main className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 py-12">
-            <h1
-          className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-center text-[#1A237E] mb-10"
-            >
-              Detect Deepfakes with Cutting-Edge AI
+      <main className="w-full max-w-[1440px] mx-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
+            <h1 className="text-2xl md:text-5xl lg:text-6xl font-extrabold leading-tight whitespace-nowrap">
+              <span className="bg-gradient-to-r from-[#24E37A] to-[#24E37A] bg-clip-text text-transparent">The first AI-powered </span>
+              <span className="bg-gradient-to-r from-[#7C6CF6] to-[#7C6CF6] bg-clip-text text-transparent">Deepfake Detection</span>
             </h1>
+        </div>
 
             <div className="grid grid-cols-12 gap-8 px-2 md:px-10">
               {/* Image 1 */}
@@ -107,7 +108,7 @@ const HomePage = () => {
             </div>
       </main>
 
-      <footer className="text-center py-5 bg-white/80 border-t border-[#E0E3E7] shadow-inner text-[#757575] mt-16">
+      <footer className="text-center py-5 bg-[#7C6CF6]/10 border-t border-[#7C6CF6]/20 shadow-inner text-[#7C6CF6] mt-16">
         <p className="text-sm">
           ©2024 DeepShield. Protected by Google Privacy Policy & Terms of
           Service.

@@ -13,7 +13,20 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 # Configure CORS to allow your Vercel frontend and all origins for now
-CORS(app, origins="*", methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type"])
+CORS(app, 
+     origins="*", 
+     methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"], 
+     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+     supports_credentials=True)
+
+# Add manual CORS headers for additional compatibility
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 # Directory to save uploaded files
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
@@ -51,6 +64,10 @@ def home():
             "health": "/health (GET)"
         }
     }), 200
+
+@app.route('/detect', methods=['OPTIONS'])
+def detect_options():
+    return '', 200
 
 @app.route('/detect', methods=['POST'])
 def detect():

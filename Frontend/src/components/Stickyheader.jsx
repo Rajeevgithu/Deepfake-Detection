@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Shield } from "lucide-react";
 
 const StickyHeader = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(prev => !prev);
@@ -12,76 +13,95 @@ const StickyHeader = () => {
     const handleResize = () => {
       if (window.innerWidth > 768) setIsMobileMenuOpen(false);
     };
+    
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleScroll);
+    
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   const navItems = [
-    { name: "Home", path: "/" },
-    { name: "Detect", path: "/detect" },
-    { name: "Features", path: "/features" },
+    { name: "Home", path: "/", color: "from-[#24E37A] to-[#24E37A]" },
+    { name: "Detect", path: "/detect", color: "from-[#7C6CF6] to-[#7C6CF6]" },
+    { name: "Features", path: "/features", color: "from-[#24E37A] to-[#24E37A]" },
   ];
 
   return (
-    <header className="sticky top-0 z-50 shadow-xl border-b border-cyan-400/20 backdrop-blur-lg bg-white/80 dark:bg-zinc-900/80 dark:border-cyan-400/10 transition-all">
-      <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${
+      isScrolled 
+        ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-[#7C6CF6]/20" 
+        : "bg-white/90 backdrop-blur-sm shadow-sm"
+    }`}>
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-3 group">
-          <img
-            src="/Moon.svg"
-            alt="DeepShield Logo"
-            className="w-10 h-10 logo-glow"
-          />
-          <span className="text-2xl font-extrabold tracking-wide text-[#1A237E]">
+          <div className="relative">
+            <Shield className="w-8 h-8 sm:w-10 sm:h-10 text-[#24E37A] group-hover:text-[#7C6CF6] transition-colors duration-200" />
+            <div className="absolute inset-0 bg-[#7C6CF6]/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 -z-10 scale-110"></div>
+          </div>
+          <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-[#24E37A] to-[#7C6CF6] bg-clip-text text-transparent">
             DeepShield
           </span>
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-4">
-          {navItems.map(({ name, path }) => (
+        <div className="hidden md:flex items-center gap-1 lg:gap-2">
+          {navItems.map(({ name, path, color }) => (
             <Link
               key={name}
               to={path}
-              className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-200 group ${
+              className={`relative px-6 py-3 font-medium transition-all duration-300 group rounded-full ${
                 location.pathname === path
-                  ? "nav-link-active text-white scale-105"
-                  : "text-gray-800 dark:text-gray-200 hover:text-cyan-500"
+                  ? `bg-gradient-to-r ${color} text-white shadow-lg transform scale-105`
+                  : "text-[#7C6CF6] hover:text-white hover:bg-[#7C6CF6]"
               }`}
             >
               <span className="relative z-10">{name}</span>
-              <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-cyan-500 transition-all group-hover:w-full"></span>
+              {location.pathname !== path && (
+                <div className="absolute inset-0 bg-[#7C6CF6] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"></div>
+              )}
             </Link>
           ))}
         </div>
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden p-2 rounded-lg bg-cyan-600 text-white shadow-lg hover:shadow-xl transition"
+          className={`md:hidden p-2.5 transition-all duration-300 rounded-full ${
+            isMobileMenuOpen 
+              ? "bg-[#7C6CF6] hover:bg-[#24E37A] text-white shadow-lg" 
+              : "bg-gradient-to-r from-[#24E37A] to-[#7C6CF6] hover:from-[#7C6CF6] hover:to-[#24E37A] text-white shadow-md hover:shadow-lg"
+          }`}
           onClick={toggleMobileMenu}
           aria-label="Toggle menu"
         >
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </nav>
 
       {/* Mobile Nav Menu */}
       <div
-        className={`md:hidden transition-all duration-500 ease-in-out overflow-hidden ${
-          isMobileMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+        className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+          isMobileMenuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
         }`}
       >
-        <div className="bg-white/90 dark:bg-zinc-800/90 shadow-lg border-t border-cyan-400/20">
-          <div className="flex flex-col items-center space-y-4 p-4">
-            {navItems.map(({ name, path }) => (
+        <div className="bg-white border-t border-[#7C6CF6]/20 shadow-lg">
+          <div className="px-4 py-3 space-y-1">
+            {navItems.map(({ name, path, color }) => (
               <Link
                 key={name}
                 to={path}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`w-full text-center py-3 rounded-lg font-semibold transition-all duration-300 ${
+                className={`block px-4 py-3 font-medium transition-all duration-300 rounded-full ${
                   location.pathname === path
-                    ? "nav-link-active text-white"
-                    : "text-gray-800 dark:text-gray-200 hover:text-cyan-500"
+                    ? `bg-gradient-to-r ${color} text-white shadow-md`
+                    : "text-[#7C6CF6] hover:text-white hover:bg-[#7C6CF6]"
                 }`}
               >
                 {name}
