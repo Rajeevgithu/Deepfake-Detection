@@ -37,7 +37,7 @@ const DetectPage = () => {
       formData.append("realMedia", realFile);
       formData.append("fakeMedia", fakeFile);
 
-      const response = await fetch("http://localhost:8877/detect", {
+      const response = await fetch("https://deepfake-detection-sxos.onrender.com/detect", {
         method: "POST",
         body: formData,
       });
