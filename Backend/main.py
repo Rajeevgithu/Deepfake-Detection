@@ -7,12 +7,8 @@ from werkzeug.utils import secure_filename
 import cv2
 
 app = Flask(__name__)
-# Configure CORS to allow your Vercel frontend
-CORS(app, origins=[
-    "https://deepfake-detection-lh9w.vercel.app",
-    "http://localhost:5173",  # For local development
-    "http://localhost:3000"   # Alternative local port
-])
+# Configure CORS to allow your Vercel frontend and all origins for now
+CORS(app, origins="*", methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type"])
 
 # Directory to save uploaded files
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
@@ -40,6 +36,16 @@ def convert_to_native_types(obj):
     elif isinstance(obj, np.bool_):
         return bool(obj)
     return obj
+
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({
+        "message": "DeepFake Detection API is running",
+        "endpoints": {
+            "detect": "/detect (POST)",
+            "health": "/health (GET)"
+        }
+    }), 200
 
 @app.route('/detect', methods=['POST'])
 def detect():
