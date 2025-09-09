@@ -5,6 +5,11 @@ import numpy as np
 from deepface import DeepFace
 from werkzeug.utils import secure_filename
 import cv2
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 # Configure CORS to allow your Vercel frontend and all origins for now
@@ -78,19 +83,20 @@ def detect():
         if real_img is None or fake_img is None:
             raise ValueError("Unable to read one or both images")
 
-        # Get face embeddings with optimized settings
+        # Get face embeddings with optimized settings for faster processing
         try:
+            # Use VGG-Face model which is faster than Facenet512
             representation_real = DeepFace.represent(
                 img_path=real_media_path, 
-                model_name="Facenet512", 
-                enforce_detection=False,  # Changed to False for faster processing
-                detector_backend="opencv"  # Use OpenCV for faster detection
+                model_name="VGG-Face",  # Faster model
+                enforce_detection=False,
+                detector_backend="opencv"
             )
             representation_fake = DeepFace.represent(
                 img_path=fake_media_path, 
-                model_name="Facenet512", 
-                enforce_detection=False,  # Changed to False for faster processing
-                detector_backend="opencv"  # Use OpenCV for faster detection
+                model_name="VGG-Face",  # Faster model
+                enforce_detection=False,
+                detector_backend="opencv"
             )
 
             vector_real = representation_real[0]["embedding"]
@@ -105,10 +111,19 @@ def detect():
             }), 200
 
         except Exception as e:
-            raise ValueError(f"Face analysis error: {str(e)}")
+            logger.error(f"DeepFace processing error: {str(e)}")
+            return jsonify({
+                "error": "Face analysis failed",
+                "message": "Unable to process images. Please ensure images contain clear faces and try again.",
+                "details": str(e)
+            }), 500
 
     except Exception as e:
-        return jsonify({"message": str(e)}), 400
+        logger.error(f"General processing error: {str(e)}")
+        return jsonify({
+            "error": "Processing failed", 
+            "message": str(e)
+        }), 400
 
     finally:
         # Clean up files in finally block to ensure they're always removed
@@ -122,4 +137,5 @@ def detect():
 if __name__ == '__main__':
     import os
     port = int(os.environ.get("PORT", 8877))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # Use production WSGI server for Render
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
