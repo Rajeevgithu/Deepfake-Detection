@@ -46,7 +46,18 @@ const DetectPage = () => {
       if (!response.ok) throw new Error("Server error");
 
       const data = await response.json();
-      setResult(data);
+      
+      // Handle error responses from backend
+      if (data.error) {
+        setResult({
+          is_likely_deepfake: false,
+          similarity_score: data.similarity_score || 0,
+          message: data.message || "An error occurred during analysis.",
+          error: true
+        });
+      } else {
+        setResult(data);
+      }
       setShowPopup(true);
     } catch (err) {
       // Show error popup
@@ -55,7 +66,8 @@ const DetectPage = () => {
         similarity_score: 0,
         message: err.name === 'AbortError' 
           ? "Request timed out. Please try again with smaller images or check your connection."
-          : "An error occurred. Please try again."
+          : "An error occurred. Please try again.",
+        error: true
       });
       setShowPopup(true);
     } finally {
@@ -185,21 +197,48 @@ const DetectPage = () => {
       {/* Result Popup */}
       {showPopup && result && (
         <div className="fixed top-1/2 left-1/2 z-50 transform -translate-x-1/2 -translate-y-1/2 bg-white border-2 border-[#7C6CF6] p-8 shadow-2xl max-w-[90vw] w-[400px] text-center">
-          <h3 className="text-xl font-bold mb-4 text-[#7C6CF6]">Detection Result</h3>
-          <p className="mb-2 font-medium">
-            <span className="text-[#7C6CF6]">Result: </span>
-            <span
-              className={`font-bold ${
-                result.is_likely_deepfake ? "text-red-600" : "text-[#24E37A]"
-              }`}
-            >
-              {result.is_likely_deepfake ? "Likely Deepfake" : "Likely Real"}
-            </span>
-          </p>
-          <p className="mb-2">
-            <strong>Similarity Score:</strong>{" "}
-            {result.similarity_score ?? result.cosine_similarity}
-          </p>
+          <h3 className="text-xl font-bold mb-4 text-[#7C6CF6]">
+            {result.error ? "Analysis Error" : "Detection Result"}
+          </h3>
+          
+          {!result.error ? (
+            <>
+              <p className="mb-2 font-medium">
+                <span className="text-[#7C6CF6]">Result: </span>
+                <span
+                  className={`font-bold ${
+                    result.is_likely_deepfake ? "text-red-600" : "text-[#24E37A]"
+                  }`}
+                >
+                  {result.is_likely_deepfake ? "Likely Deepfake" : "Likely Real"}
+                </span>
+              </p>
+              <p className="mb-2">
+                <strong>Similarity Score:</strong>{" "}
+                {typeof result.similarity_score === 'number' 
+                  ? result.similarity_score.toFixed(4) 
+                  : result.similarity_score ?? result.cosine_similarity}
+              </p>
+              {result.confidence && (
+                <p className="mb-2">
+                  <strong>Confidence:</strong>{" "}
+                  <span className={`font-semibold ${
+                    result.confidence === 'high' ? 'text-green-600' : 'text-yellow-600'
+                  }`}>
+                    {result.confidence.charAt(0).toUpperCase() + result.confidence.slice(1)}
+                  </span>
+                </p>
+              )}
+            </>
+          ) : (
+            <div className="mb-4">
+              <p className="text-red-600 font-semibold mb-2">⚠️ Analysis Failed</p>
+              <p className="text-sm text-gray-600">
+                {result.message}
+              </p>
+            </div>
+          )}
+          
           <p className="mb-6 text-black font-bold">
             {result.message}
           </p>

@@ -110,19 +110,44 @@ def detect():
         if real_img is None or fake_img is None:
             raise ValueError("Unable to read one or both images")
 
-        # Get face embeddings with optimized settings for faster processing
+        # Get face embeddings with proper face detection
         try:
-            # Use VGG-Face model which is faster than Facenet512
+            logger.info("Starting face detection and feature extraction...")
+            
+            # First, verify faces can be detected
+            try:
+                # Test face detection on both images
+                from deepface import DeepFace
+                real_faces = DeepFace.extract_faces(real_media_path, detector_backend="opencv")
+                fake_faces = DeepFace.extract_faces(fake_media_path, detector_backend="opencv")
+                
+                if len(real_faces) == 0:
+                    raise ValueError("No face detected in the real image. Please ensure the image contains a clear, visible face.")
+                if len(fake_faces) == 0:
+                    raise ValueError("No face detected in the suspected deepfake image. Please ensure the image contains a clear, visible face.")
+                
+                logger.info(f"Detected {len(real_faces)} face(s) in real image, {len(fake_faces)} face(s) in fake image")
+                
+            except Exception as face_error:
+                logger.error(f"Face detection error: {str(face_error)}")
+                return jsonify({
+                    "error": "Face detection failed",
+                    "message": str(face_error),
+                    "similarity_score": 0,
+                    "is_likely_deepfake": False
+                }), 400
+
+            # Use Facenet512 for better accuracy (more reliable than VGG-Face)
             representation_real = DeepFace.represent(
                 img_path=real_media_path, 
-                model_name="VGG-Face",  # Faster model
-                enforce_detection=False,
+                model_name="Facenet512",  # More accurate model
+                enforce_detection=True,    # Strict face detection
                 detector_backend="opencv"
             )
             representation_fake = DeepFace.represent(
                 img_path=fake_media_path, 
-                model_name="VGG-Face",  # Faster model
-                enforce_detection=False,
+                model_name="Facenet512",  # More accurate model
+                enforce_detection=True,    # Strict face detection
                 detector_backend="opencv"
             )
 
@@ -131,10 +156,16 @@ def detect():
 
             similarity_score = cosine_similarity(vector_real, vector_fake)
             
+            # More conservative threshold for better accuracy
+            is_deepfake = similarity_score < 0.8  # Higher threshold = more conservative
+            
+            logger.info(f"Similarity score: {similarity_score:.4f}, Is deepfake: {is_deepfake}")
+            
             return jsonify({
                 "message": "Analysis completed successfully",
                 "similarity_score": convert_to_native_types(similarity_score),
-                "is_likely_deepfake": convert_to_native_types(similarity_score < 0.7)
+                "is_likely_deepfake": convert_to_native_types(is_deepfake),
+                "confidence": "high" if abs(similarity_score - 0.8) > 0.15 else "medium"
             }), 200
 
         except Exception as e:
@@ -142,7 +173,9 @@ def detect():
             return jsonify({
                 "error": "Face analysis failed",
                 "message": "Unable to process images. Please ensure images contain clear faces and try again.",
-                "details": str(e)
+                "details": str(e),
+                "similarity_score": 0,
+                "is_likely_deepfake": False
             }), 500
 
     except Exception as e:
