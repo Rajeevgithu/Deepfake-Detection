@@ -95,22 +95,37 @@ def home():
 
 @app.route('/health', methods=['GET'])
 def health():
-    import psutil
-    memory_info = psutil.virtual_memory()
-    return jsonify({
-        "status": "healthy",
-        "message": "DeepFake Detection API is operational",
-        "timestamp": str(pd.Timestamp.now()),
-        "memory_usage": {
+    try:
+        import psutil
+        memory_info = psutil.virtual_memory()
+        memory_data = {
             "percent": memory_info.percent,
             "available_mb": round(memory_info.available / 1024 / 1024, 2),
             "used_mb": round(memory_info.used / 1024 / 1024, 2)
         }
+    except ImportError:
+        memory_data = {"error": "psutil not available"}
+    except Exception as e:
+        memory_data = {"error": str(e)}
+    
+    return jsonify({
+        "status": "healthy",
+        "message": "DeepFake Detection API is operational",
+        "timestamp": str(pd.Timestamp.now()),
+        "memory_usage": memory_data
     }), 200
 
 @app.route('/detect', methods=['OPTIONS'])
 def detect_options():
     return '', 200
+
+@app.route('/test', methods=['GET'])
+def test():
+    return jsonify({
+        "message": "Backend is working correctly",
+        "status": "ok",
+        "timestamp": str(pd.Timestamp.now())
+    }), 200
 
 @app.route('/detect', methods=['POST'])
 def detect():
@@ -138,8 +153,13 @@ def detect():
 
         # Optimize images for memory efficiency
         logger.info("Optimizing images for memory efficiency...")
-        real_optimized_path = optimize_image_for_memory(real_media_path, max_size=512)
-        fake_optimized_path = optimize_image_for_memory(fake_media_path, max_size=512)
+        try:
+            real_optimized_path = optimize_image_for_memory(real_media_path, max_size=512)
+            fake_optimized_path = optimize_image_for_memory(fake_media_path, max_size=512)
+        except Exception as opt_error:
+            logger.warning(f"Image optimization failed, using original images: {str(opt_error)}")
+            real_optimized_path = real_media_path
+            fake_optimized_path = fake_media_path
 
         # Verify images can be opened
         real_img = cv2.imread(real_optimized_path)
