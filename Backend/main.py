@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import numpy as np
+import pandas as pd
 from deepface import DeepFace
 from werkzeug.utils import secure_filename
 import cv2
@@ -59,10 +60,19 @@ def convert_to_native_types(obj):
 def home():
     return jsonify({
         "message": "DeepFake Detection API is running",
+        "status": "healthy",
         "endpoints": {
             "detect": "/detect (POST)",
             "health": "/health (GET)"
         }
+    }), 200
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({
+        "status": "healthy",
+        "message": "DeepFake Detection API is operational",
+        "timestamp": str(pd.Timestamp.now())
     }), 200
 
 @app.route('/detect', methods=['OPTIONS'])
