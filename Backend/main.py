@@ -7,6 +7,8 @@ from deepface import DeepFace
 from werkzeug.utils import secure_filename
 import cv2
 import logging
+import gc
+from PIL import Image
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,6 +41,30 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def optimize_image_for_memory(image_path, max_size=512):
+    """
+    Optimize image to reduce memory usage by resizing and compressing
+    """
+    try:
+        # Open image with PIL
+        with Image.open(image_path) as img:
+            # Convert to RGB if necessary
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # Resize if image is too large
+            if max(img.size) > max_size:
+                img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+            
+            # Save optimized image
+            optimized_path = image_path.replace('.', '_optimized.')
+            img.save(optimized_path, 'JPEG', quality=85, optimize=True)
+            
+            return optimized_path
+    except Exception as e:
+        logger.warning(f"Image optimization failed: {str(e)}")
+        return image_path
+
 def cosine_similarity(vector1, vector2):
     dot_product = np.dot(vector1, vector2)
     norm_vector1 = np.linalg.norm(vector1)
@@ -69,10 +95,17 @@ def home():
 
 @app.route('/health', methods=['GET'])
 def health():
+    import psutil
+    memory_info = psutil.virtual_memory()
     return jsonify({
         "status": "healthy",
         "message": "DeepFake Detection API is operational",
-        "timestamp": str(pd.Timestamp.now())
+        "timestamp": str(pd.Timestamp.now()),
+        "memory_usage": {
+            "percent": memory_info.percent,
+            "available_mb": round(memory_info.available / 1024 / 1024, 2),
+            "used_mb": round(memory_info.used / 1024 / 1024, 2)
+        }
     }), 200
 
 @app.route('/detect', methods=['OPTIONS'])
@@ -103,9 +136,14 @@ def detect():
         real_media.save(real_media_path)
         fake_media.save(fake_media_path)
 
+        # Optimize images for memory efficiency
+        logger.info("Optimizing images for memory efficiency...")
+        real_optimized_path = optimize_image_for_memory(real_media_path, max_size=512)
+        fake_optimized_path = optimize_image_for_memory(fake_media_path, max_size=512)
+
         # Verify images can be opened
-        real_img = cv2.imread(real_media_path)
-        fake_img = cv2.imread(fake_media_path)
+        real_img = cv2.imread(real_optimized_path)
+        fake_img = cv2.imread(fake_optimized_path)
         
         if real_img is None or fake_img is None:
             raise ValueError("Unable to read one or both images")
@@ -114,12 +152,12 @@ def detect():
         try:
             logger.info("Starting face detection and feature extraction...")
             
-            # First, verify faces can be detected
+            # First, verify faces can be detected using optimized images
             try:
-                # Test face detection on both images
+                # Test face detection on both optimized images
                 from deepface import DeepFace
-                real_faces = DeepFace.extract_faces(real_media_path, detector_backend="opencv")
-                fake_faces = DeepFace.extract_faces(fake_media_path, detector_backend="opencv")
+                real_faces = DeepFace.extract_faces(real_optimized_path, detector_backend="opencv")
+                fake_faces = DeepFace.extract_faces(fake_optimized_path, detector_backend="opencv")
                 
                 if len(real_faces) == 0:
                     raise ValueError("No face detected in the real image. Please ensure the image contains a clear, visible face.")
@@ -127,6 +165,10 @@ def detect():
                     raise ValueError("No face detected in the suspected deepfake image. Please ensure the image contains a clear, visible face.")
                 
                 logger.info(f"Detected {len(real_faces)} face(s) in real image, {len(fake_faces)} face(s) in fake image")
+                
+                # Clear face arrays from memory
+                del real_faces, fake_faces
+                gc.collect()
                 
             except Exception as face_error:
                 logger.error(f"Face detection error: {str(face_error)}")
@@ -137,16 +179,16 @@ def detect():
                     "is_likely_deepfake": False
                 }), 400
 
-            # Use Facenet512 for better accuracy (more reliable than VGG-Face)
+            # Use VGG-Face for better memory efficiency (smaller model than Facenet512)
             representation_real = DeepFace.represent(
-                img_path=real_media_path, 
-                model_name="Facenet512",  # More accurate model
+                img_path=real_optimized_path, 
+                model_name="VGG-Face",  # More memory efficient model
                 enforce_detection=True,    # Strict face detection
                 detector_backend="opencv"
             )
             representation_fake = DeepFace.represent(
-                img_path=fake_media_path, 
-                model_name="Facenet512",  # More accurate model
+                img_path=fake_optimized_path, 
+                model_name="VGG-Face",  # More memory efficient model
                 enforce_detection=True,    # Strict face detection
                 detector_backend="opencv"
             )
@@ -186,13 +228,39 @@ def detect():
         }), 400
 
     finally:
-        # Clean up files in finally block to ensure they're always removed
-        for path in [real_media_path, fake_media_path]:
+        # Clean up files and memory in finally block to ensure they're always removed
+        cleanup_paths = [real_media_path, fake_media_path]
+        
+        # Add optimized file paths if they exist
+        if 'real_optimized_path' in locals():
+            cleanup_paths.append(real_optimized_path)
+        if 'fake_optimized_path' in locals():
+            cleanup_paths.append(fake_optimized_path)
+        
+        for path in cleanup_paths:
             if path and os.path.exists(path):
                 try:
                     os.remove(path)
                 except:
                     pass
+        
+        # Clear variables from memory
+        if 'real_img' in locals():
+            del real_img
+        if 'fake_img' in locals():
+            del fake_img
+        if 'representation_real' in locals():
+            del representation_real
+        if 'representation_fake' in locals():
+            del representation_fake
+        if 'vector_real' in locals():
+            del vector_real
+        if 'vector_fake' in locals():
+            del vector_fake
+        
+        # Force garbage collection
+        gc.collect()
+        logger.info("Memory cleanup completed")
 
 if __name__ == '__main__':
     import os

@@ -7,3 +7,4 @@ deepface
 flask
 flask-cors
 tf-keras
+psutil>=5.9.0
